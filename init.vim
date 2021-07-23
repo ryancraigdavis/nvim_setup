@@ -2,7 +2,7 @@ call plug#begin("~/.vim/plugged")
   " Plugin Section
 
 " Theme - Sublime with Airline
-Plug 'patstockwell/vim-monokai-tasty'
+Plug 'rakr/vim-one'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
@@ -11,6 +11,7 @@ Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 
 " Debugger
 Plug 'szw/vim-maximizer'
+Plug 'puremourning/vimspector'
 
 " WIP
 " Unit test coverage
@@ -27,8 +28,9 @@ Plug 'junegunn/fzf.vim'
 " Python Plugins
 Plug 'zchee/deoplete-jedi'
 
-" C Plugins
+" C and Rust Plugins
 Plug 'deoplete-plugins/deoplete-clang'
+Plug 'cespare/vim-toml'
 
 " Javascript Plugins
 Plug 'carlitux/deoplete-ternjs', { 'do': 'npm install -g tern' }
@@ -69,7 +71,8 @@ let g:python3_host_prog = expand('/Library/Frameworks/Python.framework/Versions/
 :let mapleader = " "
 
 " Vim Theme
-colorscheme vim-monokai-tasty
+colorscheme one
+set background=dark
 
 " Deoplete theme
 let g:deoplete#enable_at_startup = 1
@@ -80,8 +83,10 @@ inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
 " HTML Tag Creation
 let g:user_emmet_leader_key='<C-Z>'
 
+let g:AutoPairsShortcutToggle = '<C-F>'
+
 " Airline theme with buffer tabline
-let g:airline_theme='monokai_tasty'
+let g:airline_theme='one'
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#buffer_nr_show = 1
@@ -92,6 +97,14 @@ let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6  }  }
 
 " Launch pudb | insert pudb statement
 nmap <leader>da oimport pudb; pudb.set_trace()<Esc>
+nmap <leader>z :MaximizerToggle!<CR>
+
+" VimSpector
+let g:vimspector_enable_mappings = 'HUMAN'
+noremap <leader>dd :call vimspector#Launch()<CR>
+
+
+
 
 " CamelCase movement
 let g:camelcasemotion_key = '<leader>'
@@ -127,6 +140,7 @@ let g:ale_linters = {
 \  'vim': ['vint'],
 \  'cpp': ['clang'],
 \  'c': ['clang'],
+\  'rust': ['analyzer'],
 \}
 
 let g:ale_fixers = {
@@ -186,6 +200,10 @@ function! ToggleHybridLines()
 endfunction
 
 map <leader>l :call ToggleHybridLines()<cr>
+
+" Smart case for searches
+set ignorecase
+set smartcase
 
 " makes * and # work on visual mode too.
 function! s:VSetSearch(cmdtype)
