@@ -36,8 +36,12 @@ require "paq-nvim" {
     "neovim/nvim-lspconfig",
     "glepnir/lspsaga.nvim",
 
-    -- Status Line in Lua
+    -- Status Line and Buffer Line in Lua
     "hoob3rt/lualine.nvim",
+    'romgrk/barbar.nvim',
+
+    -- File Tree
+    "kyazdani42/nvim-tree.lua",
     "kyazdani42/nvim-web-devicons",
 
     -- Auto pairs and bracket surroundings
@@ -63,11 +67,15 @@ require "paq-nvim" {
     -- VSCode Snippet Feature in Nvim
     "hrsh7th/vim-vsnip",
 
-
+    -- Formatter
     "mhartington/formatter.nvim",
+
+    -- Telescope Finder
     "nvim-lua/plenary.nvim",
     "nvim-lua/popup.nvim",
     "nvim-telescope/telescope.nvim",
+
+    -- Treesitter for NeoVim
     "nvim-treesitter/nvim-treesitter",
 
     -- Code Minimap Plugin written in Rust
@@ -135,7 +143,9 @@ require "lualine".setup {
     extensions = {}
 }
 
-
+-- File Tree for Nvim
+g.nvim_tree_auto_close = 1
+map("n", "<C-t>", ":NvimTreeToggle<cr>")
 
 -- Hop
 require "hop".setup()
@@ -157,6 +167,25 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
 }
 
 -- LSP Server config
+require "lspconfig".pyright.setup(
+  {
+    cmd = {"pyright-langserver", "--stdio"},
+    filetypes = {"python"},
+    capabilities = capabilities,
+    --[[ root_dir = function(filename)
+          return util.root_pattern(unpack(root_files))(filename) or util.path.dirname(filename)
+        end, ]]
+    settings = {
+      python = {
+        analysis = {
+          autoSearchPaths = true,
+          diagnosticMode = "workspace",
+          useLibraryCodeForTypes = true
+        }
+      }
+    }
+  }
+)
 require "lspconfig".cssls.setup(
   {
     cmd = {"vscode-css-language-server", "--stdio"},
@@ -219,7 +248,7 @@ map("n", "<leader>cd", ":Lspsaga preview_definition<CR>", {silent = true})
 local ts = require "nvim-treesitter.configs"
 ts.setup {ensure_installed = "maintained", highlight = {enable = true}}
 
-
+-- Various options
 opt.relativenumber = true
 opt.number = true
 opt.backspace = {"indent", "eol", "start"}
@@ -285,22 +314,18 @@ g.camelcasemotion_key = '<leader>'
 -- map("v", ",i", "<Esc>l,bv,e")
 -- map("o", ",i", ":normal v,i<CR>")
 
--- Buffer Movement
---[[ map("<C-J>", ":bnext<CR>")
-map("<C-K>", ":bprev<CR>")
-
 -- Git fugitive
-map("n", "<leader>gs", ":Git")
-map("n", "<leader>gd", ":Gdiff")
-map("n", "<leader>gf", ":diffget //3")
-map("n", "<leader>gj", ":diffget //2")
-map("n", "<leader>gc", ":Git commit")
-map("n", "<leader>gp", ":Git push")
+map("n", "<leader>gs", ":Git<CR>")
+map("n", "<leader>gd", ":Gdiff<CR>")
+map("n", "<leader>gf", ":diffget //3<CR>")
+map("n", "<leader>gj", ":diffget //2<CR>")
+map("n", "<leader>gc", ":Git commit<CR>")
+map("n", "<leader>gp", ":Git push<CR>")
 
 -- Copy and Paste from Clipboard
 map("v", "<C-c", ":w !pbcopy<CR><CR>")
 map("n", "<C-v", ":r !pbpaste<CR><CR>")
- ]]
+
 -- Code Minimap Config
 g.minimap_width = 10
 g.minimap_auto_start = 0
@@ -340,9 +365,9 @@ require "compe".setup {
     luasnip = true
   }
 }
-
 local t = function(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
+
 end
 
 local check_back_space = function()
@@ -382,11 +407,8 @@ vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
 
 -- End Compe related setup
 
--- Open nvimrc file
-map("n", "<Leader>v", "<cmd>e $MYVIMRC<CR>")
-
--- Source nvimrc file
-map("n", "<Leader>sv", ":luafile %<CR>")
+-- Highlight on yank
+cmd "au TextYankPost * lua vim.highlight.on_yank {on_visual = true}" -- disabled in visual mode
 
 -- Quick new file
 map("n", "<Leader>n", "<cmd>enew<CR>")
@@ -448,74 +470,20 @@ require("telescope").setup {
   }
 }
 
-map(
-  "n",
-  "<leader>p",
-  '<cmd>lua require("telescope.builtin").find_files(require("telescope.themes").get_dropdown({}))<cr>'
-)
-map("n", "<leader>r", '<cmd>lua require("telescope.builtin").registers()<cr>')
-map(
-  "n",
-  "<leader>g",
-  '<cmd>lua require("telescope.builtin").live_grep(require("telescope.themes").get_dropdown({}))<cr>'
-)
-map("n", "<leader>b", '<cmd>lua require("telescope.builtin").buffers(require("telescope.themes").get_dropdown({}))<cr>')
-map("n", "<leader>h", '<cmd>lua require("telescope.builtin").help_tags()<cr>')
-map(
-  "n",
-  "<leader>f",
-  '<cmd>lua require("telescope.builtin").file_browser(require("telescope.themes").get_dropdown({}))<cr>'
-)
-map("n", "<leader>s", '<cmd>lua require("telescope.builtin").spell_suggest()<cr>')
-map(
-  "n",
-  "<leader>i",
-  '<cmd>lua require("telescope.builtin").git_status(require("telescope.themes").get_dropdown({}))<cr>'
-)
-
--------------------- COMMANDS ------------------------------
-cmd "au TextYankPost * lua vim.highlight.on_yank {on_visual = true}" -- disabled in visual mode
-
--- Prettier function for formatter
-local prettier = function()
-  return {
-    exe = "prettier",
-    args = {"--stdin-filepath", vim.api.nvim_buf_get_name(0), "--double-quote"},
-    stdin = true
-  }
-end
-
-require("formatter").setup(
-  {
-    logging = false,
-    filetype = {
-      javascript = {prettier},
-      typescript = {prettier},
-      html = {prettier},
-      css = {prettier},
-      scss = {prettier},
-      markdown = {prettier},
-      lua = {
-        -- luafmt
-        function()
-          return {
-            exe = "luafmt",
-            args = {"--indent-count", 2, "--stdin"},
-            stdin = true
-          }
-        end
-      }
-    }
-  }
-)
-
--- Runs Formatter on save
-vim.api.nvim_exec(
-  [[
-augroup FormatAutogroup
-  autocmd!
-  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.lua : FormatWrite
-augroup END
-]],
-  true
-)
+-- Telescope File Pickers
+map("n", "<leader>fs", '<cmd>lua require("telescope.builtin").find_files()<cr>')
+map("n", "<leader>fg", '<cmd>lua require("telescope.builtin").live_grep()<cr>')
+map("n", "<leader>ff", '<cmd>lua require("telescope.builtin").file_browser()<cr>')
+-- Telescope Vim Pickers
+map("n", "<leader>vr", '<cmd>lua require("telescope.builtin").registers()<cr>')
+map("n", "<leader>vm", '<cmd>lua require("telescope.builtin").marks()<cr>')
+map("n", "<leader>vb", '<cmd>lua require("telescope.builtin").buffers()<cr>')
+map("n", "<leader>vh", '<cmd>lua require("telescope.builtin").help_tags()<cr>')
+map("n", "<leader>vs", '<cmd>lua require("telescope.builtin").search_history()<cr>')
+map("n", "<leader>vt", '<cmd>lua require("telescope.builtin").treesitter()<cr>')
+-- Telescope Git Pickers
+map("n", "<leader>is", '<cmd>lua require("telescope.builtin").git_status(require("telescope.themes").get_dropdown({}))<cr>')
+map("n", "<leader>ic", '<cmd>lua require("telescope.builtin").git_commits(require("telescope.themes").get_dropdown({}))<cr>')
+map("n", "<leader>ib", '<cmd>lua require("telescope.builtin").git_branches(require("telescope.themes").get_dropdown({}))<cr>')
+-- Telescope LSP Pickers
+map("n", "<leader>rr", '<cmd>lua require("telescope.builtin").lsp_references()<cr>')
