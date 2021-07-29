@@ -18,6 +18,20 @@ local function map(mode, lhs, rhs, opts)
   end
   vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
+-- local colors = require('ayu.colors')
+local colors = {
+  bg = '#202328',
+  fg = '#bbc2cf',
+  yellow = '#ECBE7B',
+  cyan = '#008080',
+  darkblue = '#081633',
+  green = '#98be65',
+  orange = '#FF8800',
+  violet = '#a9a1e1',
+  magenta = '#c678dd',
+  blue = '#51afef',
+  red = '#ec5f67'
+}
 
 -- Map leader to space
 g.mapleader = " "
@@ -26,7 +40,7 @@ g.mapleader = " "
 require "paq-nvim" {
     
     -- Theme
-    "navarasu/onedark.nvim",
+    "tanvirtin/monokai.nvim",
 
     -- Vim Diff on side/vim fugitive
     "airblade/vim-gitgutter",
@@ -87,23 +101,23 @@ require "paq-nvim" {
 
 
 -- Theme Config
-vim.g.onedark_style = 'warmer'
-vim.g.onedark_enable_italic = 1
-vim.g.onedark_diagnostic_text_highlight = 1
-vim.g.onedark_diagnostic_virtual_text = "colored"
-vim.g.onedark_current_word = "bold"
+vim.g.monokai_enable_italic = 1
+-- vim.g.monokai_diagnostic_text_highlight = 1
+-- vim.g.monokai_diagnostic_virtual_text = "colored"
+vim.g.monokai_current_word = "bold"
 
 opt.termguicolors = true -- You will have bad experience for diagnostic messages when it's default 4000.
 
 -- Load the colorscheme
-require('onedark').setup()
+require('monokai')
+vim.cmd([[colorscheme monokai]])
 
 
 -- Lualine Config
 require "lualine".setup {
     options = {
         icons_enabled = true,
-        theme = "onedark",
+        theme = "ayu_dark",
         component_separators = {"∙", "∙"},
         section_separators = {"", ""},
         disabled_filetypes = {}
@@ -186,6 +200,14 @@ require "lspconfig".pyright.setup(
     }
   }
 )
+
+require "lspconfig".dockerls.setup(
+  {
+    cmd = {"docker-langserver", "--stdio"},
+    filetypes = {"dockerfile", "Dockerfile"},
+  }
+)
+
 require "lspconfig".cssls.setup(
   {
     cmd = {"vscode-css-language-server", "--stdio"},
@@ -282,7 +304,7 @@ opt.smartindent = true -- Insert indents automatically
 opt.spelllang = "en"
 opt.splitbelow = true -- Put new windows below current
 opt.splitright = true -- Put new windows right of current
-opt.tabstop = 4 -- Number of spaces tabs count for
+opt.tabstop = 2 -- Number of spaces tabs count for
 opt.updatetime = 250 -- don't give |ins-completion-menu| messages.
 opt.wrap = true
 
@@ -420,7 +442,7 @@ map("n", "<Leader>sa", "ggVG<c-$>")
 map("v", "y", "ygv<Esc>")
 
 -- Easier file save
-map("n", "<Leader>w", "<cmd>:w<CR>")
+map("n", "<leader>w", "<cmd>:w<CR>")
 
 -- Tab to switch buffers in Normal mode
 map("n", "<Tab>", ":bnext<CR>")
@@ -473,7 +495,8 @@ require("telescope").setup {
 -- Telescope File Pickers
 map("n", "<leader>fs", '<cmd>lua require("telescope.builtin").find_files()<cr>')
 map("n", "<leader>fg", '<cmd>lua require("telescope.builtin").live_grep()<cr>')
-map("n", "<leader>ff", '<cmd>lua require("telescope.builtin").file_browser()<cr>')
+map("n", "<leader>fr", '<cmd>lua require("telescope.builtin").grep_string()<cr>')
+map("n", "<leader>ff", '<cmd>lua require("telescope.builtin").file_browser({ hidden = true })<cr>')
 -- Telescope Vim Pickers
 map("n", "<leader>vr", '<cmd>lua require("telescope.builtin").registers()<cr>')
 map("n", "<leader>vm", '<cmd>lua require("telescope.builtin").marks()<cr>')
