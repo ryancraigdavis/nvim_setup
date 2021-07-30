@@ -3,7 +3,7 @@
 -- Dependencies
 -- Plugins require Paq, a Lua package manager, installation found https://github.com/savq/paq-nvim
 -- LSP servers must be installed for each language
--- Minimap requires an installation `brew install code-minimap`
+-- Python = `npm install -g pyright`
 
 -- Lua variables for setting various commands, functions, etc.
 local cmd = vim.cmd -- to execute Vim commands e.g. cmd('pwd')
@@ -18,7 +18,7 @@ local function map(mode, lhs, rhs, opts)
   end
   vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
--- local colors = require('ayu.colors')
+
 local colors = {
   bg = '#202328',
   fg = '#bbc2cf',
@@ -40,8 +40,9 @@ g.mapleader = " "
 require "paq-nvim" {
     
     -- Theme
-    "tanvirtin/monokai.nvim",
-
+    -- "tanvirtin/monokai.nvim",
+    "folke/tokyonight.nvim",
+    
     -- Vim Diff on side/vim fugitive
     "airblade/vim-gitgutter",
     "tpope/vim-fugitive",
@@ -92,32 +93,27 @@ require "paq-nvim" {
     -- Treesitter for NeoVim
     "nvim-treesitter/nvim-treesitter",
 
-    -- Code Minimap Plugin written in Rust
-    "wfxr/minimap.vim",
-
-    -- Package Manager
+        -- Package Manager
     "savq/paq-nvim"
 }
 
 
 -- Theme Config
-vim.g.monokai_enable_italic = 1
--- vim.g.monokai_diagnostic_text_highlight = 1
--- vim.g.monokai_diagnostic_virtual_text = "colored"
-vim.g.monokai_current_word = "bold"
+g.tokyonight_style = "night"
+g.tokyonight_italic_comments = true
 
 opt.termguicolors = true -- You will have bad experience for diagnostic messages when it's default 4000.
 
 -- Load the colorscheme
-require('monokai')
-vim.cmd([[colorscheme monokai]])
+-- require('monokai')
+vim.cmd([[colorscheme tokyonight]])
 
 
 -- Lualine Config
 require "lualine".setup {
     options = {
         icons_enabled = true,
-        theme = "ayu_dark",
+        theme = "tokyonight",
         component_separators = {"∙", "∙"},
         section_separators = {"", ""},
         disabled_filetypes = {}
@@ -271,7 +267,7 @@ local ts = require "nvim-treesitter.configs"
 ts.setup {ensure_installed = "maintained", highlight = {enable = true}}
 
 -- Various options
-opt.relativenumber = true
+opt.relativenumber = true -- enable hybrid numbers
 opt.number = true
 opt.backspace = {"indent", "eol", "start"}
 opt.clipboard = "unnamedplus"
@@ -282,7 +278,6 @@ opt.expandtab = true -- Use spaces instead of tabs
 opt.foldenable = false
 opt.foldmethod = "indent"
 opt.formatoptions = "l"
-opt.hidden = true
 opt.hidden = true -- Enable background buffers
 opt.hlsearch = true -- Highlight found searches
 opt.ignorecase = true -- Ignore case
@@ -291,7 +286,6 @@ opt.incsearch = true -- Shows the match while typing
 opt.joinspaces = false -- No double spaces with join
 opt.linebreak = true -- Stop words being broken on wrap
 opt.list = false -- Show some invisible characters
-opt.number = true -- Show line numbers
 opt.numberwidth = 5 -- Make the gutter wider by default
 opt.scrolloff = 4 -- Lines of context
 opt.shiftround = true -- Round indent
@@ -347,13 +341,6 @@ map("n", "<leader>gp", ":Git push<CR>")
 -- Copy and Paste from Clipboard
 map("v", "<C-c", ":w !pbcopy<CR><CR>")
 map("n", "<C-v", ":r !pbpaste<CR><CR>")
-
--- Code Minimap Config
-g.minimap_width = 10
-g.minimap_auto_start = 0
-g.minimap_auto_start_win_enter = 0
-g.minimap_highlight_range = 1
-g.minimap_block_filetypes = 'fugitive'
 
 -- Autocompletion setup and start
 require "compe".setup {
