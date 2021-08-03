@@ -51,6 +51,9 @@ require "paq-nvim" {
     "neovim/nvim-lspconfig",
     "glepnir/lspsaga.nvim",
 
+    -- Additional Linting
+    "mfussenegger/nvim-lint",
+
     -- Status Line and Buffer Line in Lua
     "hoob3rt/lualine.nvim",
     'romgrk/barbar.nvim',
@@ -62,6 +65,9 @@ require "paq-nvim" {
     -- Auto pairs and bracket surroundings
     "jiangmiao/auto-pairs",
     "tpope/vim-surround",
+
+    -- Commenting
+    "b3nj5m1n/kommentary",
 
     -- "Hop" navigation
     "phaazon/hop.nvim",
@@ -105,7 +111,6 @@ g.tokyonight_italic_comments = true
 opt.termguicolors = true -- You will have bad experience for diagnostic messages when it's default 4000.
 
 -- Load the colorscheme
--- require('monokai')
 vim.cmd([[colorscheme tokyonight]])
 
 
@@ -164,6 +169,10 @@ map("n", "<leader>l", "<cmd>lua require'hop'.hint_lines()<cr>")
 map("v", "<leader>j", "<cmd>lua require'hop'.hint_words()<cr>")
 map("v", "<leader>l", "<cmd>lua require'hop'.hint_lines()<cr>")
 
+-- Additional linting to LSP
+require('lint').linters_by_ft = {
+  markdown = {'vale',}
+}
 
 -- LSP this is needed for LSP completions in CSS along with the snippets plugin
 local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -267,7 +276,6 @@ local ts = require "nvim-treesitter.configs"
 ts.setup {ensure_installed = "maintained", highlight = {enable = true}}
 
 -- Various options
-opt.relativenumber = true -- enable hybrid numbers
 opt.number = true
 opt.backspace = {"indent", "eol", "start"}
 opt.clipboard = "unnamedplus"
