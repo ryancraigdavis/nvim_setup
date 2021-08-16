@@ -4,6 +4,10 @@
 -- Plugins require Paq, a Lua package manager, installation found https://github.com/savq/paq-nvim
 -- LSP servers must be installed for each language
 -- Python = `npm install -g pyright`
+-- JS/TS ESLint = `brew install efm-langserver`
+-- TypeScript = `npm install -g typescript typescript-language-server`
+-- Rust = Download from https://github.com/rust-analyzer/rust-analyzer/releases 
+--    rename `rust-analyzer` | chmod and put into path
 
 -- Lua variables for setting various commands, functions, etc.
 local cmd = vim.cmd -- to execute Vim commands e.g. cmd('pwd')
@@ -73,6 +77,7 @@ require "paq-nvim" {
     "phaazon/hop.nvim",
 
     -- Debugger
+    "puremourning/vimspector",
     "szw/vim-maximizer",
 
     -- Camelcase Movement
@@ -191,9 +196,6 @@ require "lspconfig".pyright.setup(
     cmd = {"pyright-langserver", "--stdio"},
     filetypes = {"python"},
     capabilities = capabilities,
-    --[[ root_dir = function(filename)
-          return util.root_pattern(unpack(root_files))(filename) or util.path.dirname(filename)
-        end, ]]
     settings = {
       python = {
         analysis = {
@@ -205,6 +207,8 @@ require "lspconfig".pyright.setup(
     }
   }
 )
+
+require "lspconfig".rust_analyzer.setup{}
 
 require "lspconfig".dockerls.setup(
   {
@@ -232,7 +236,75 @@ require "lspconfig".cssls.setup(
     }
   }
 )
-require "lspconfig".tsserver.setup {}
+
+-- Javascript/Typescript Configurations
+-- ESLint config for the EFM server
+local eslint = {
+  lintCommand = "eslint_d -f unix --stdin --stdin-filename ${INPUT}",
+  lintStdin = true,
+  lintFormats = {"%f:%l:%c: %m"},
+  lintIgnoreExitCode = true,
+  formatCommand = "eslint_d --fix-to-stdout --stdin --stdin-filename=${INPUT}",
+  formatStdin = true
+}
+
+local function eslint_config_exists()
+  local eslintrc = vim.fn.glob(".eslintrc*", 0, 1)
+
+  if not vim.tbl_isempty(eslintrc) then
+    return true
+  end
+
+  if vim.fn.filereadable("package.json") then
+    if vim.fn.json_decode(vim.fn.readfile("package.json"))["eslintConfig"] then
+      return true
+    end
+  end
+
+  return false
+end
+
+require "lspconfig".tsserver.setup {
+  on_attach = function(client)
+    if client.config.flags then
+      client.config.flags.allow_incremental_sync = true
+    end
+    client.resolved_capabilities.document_formatting = false
+    set_lsp_config(client)
+  end
+}
+
+require "lspconfig".efm.setup {
+  on_attach = function(client)
+    client.resolved_capabilities.document_formatting = true
+    client.resolved_capabilities.goto_definition = false
+    set_lsp_config(client)
+  end,
+  root_dir = function()
+    if not eslint_config_exists() then
+      return nil
+    end
+    return vim.fn.getcwd()
+  end,
+  settings = {
+    languages = {
+      javascript = {eslint},
+      javascriptreact = {eslint},
+      ["javascript.jsx"] = {eslint},
+      typescript = {eslint},
+      ["typescript.tsx"] = {eslint},
+      typescriptreact = {eslint}
+    }
+  },
+  filetypes = {
+    "javascript",
+    "javascriptreact",
+    "javascript.jsx",
+    "typescript",
+    "typescript.tsx",
+    "typescriptreact"
+  },
+}
 
 -- LSP Prevents inline buffer annotations
 vim.lsp.diagnostic.show_line_diagnostics()
@@ -297,7 +369,7 @@ opt.list = false -- Show some invisible characters
 opt.numberwidth = 5 -- Make the gutter wider by default
 opt.scrolloff = 4 -- Lines of context
 opt.shiftround = true -- Round indent
-opt.shiftwidth = 4 -- Size of an indent
+opt.shiftwidth = 2 -- Size of an indent
 opt.showmode = false -- Don't display mode
 opt.sidescrolloff = 8 -- Columns of context
 opt.signcolumn = "yes" -- always show signcolumns
@@ -324,13 +396,13 @@ augroup END
 )
 
 -- HTML Tag completion
-g.user_emmet_leader_key="<C-Z>"
+g.user_emmet_leader_key="<C-w>"
 
 -- Debugger/Vimspector Config
-map("n", "<leader>da", "oimport pudb; pudb.set_trace()<Esc>")
+map("n", "<leader>dp", "oimport pudb; pudb.set_trace()<Esc>")
 map("n", "<leader>z", ":MaximizerToggle!<CR>")
--- g.vimspector_enable_mappings = "HUMAN"
--- map("n", "<leader>dd", ":call vimspector#Launch()<CR>")
+g.vimspector_enable_mappings = "HUMAN"
+map("n", "<leader>da", ":call vimspector#Launch()<CR>")
 
 -- Camelcase Movement
 g.camelcasemotion_key = '<leader>'
