@@ -1,13 +1,15 @@
 -- Ryan Davis NeoVim 0.5 Lua Config
+-- Inspiration from Ben Frain https://gist.github.com/benfrain/97f2b91087121b2d4ba0dcc4202d252f
 
 -- Dependencies
 -- Plugins require Paq, a Lua package manager, installation found https://github.com/savq/paq-nvim
 -- LSP servers must be installed for each language
 -- Python = `npm install -g pyright`
--- JS/TS ESLint = `brew install efm-langserver`
+-- JS/TS ESLint, Docker, Lua = `brew install efm-langserver`
 -- TypeScript = `npm install -g typescript typescript-language-server`
 -- Rust = Download from https://github.com/rust-analyzer/rust-analyzer/releases
 --    rename `rust-analyzer` | chmod and put into path
+-- Formatter also requires that each formmatter (black for Python) be installed as well
 
 -- Lua variables for setting various commands, functions, etc.
 local cmd = vim.cmd -- to execute Vim commands e.g. cmd('pwd')
@@ -177,10 +179,8 @@ map("n", "<leader>l", "<cmd>lua require'hop'.hint_lines()<cr>")
 map("v", "<leader>j", "<cmd>lua require'hop'.hint_words()<cr>")
 map("v", "<leader>l", "<cmd>lua require'hop'.hint_lines()<cr>")
 
--- Additional linting to LSP
-require("lint").linters_by_ft = {
-  markdown = { "vale" },
-}
+-- Surround
+require("surround").setup({})
 
 -- LSP this is needed for LSP completions in CSS along with the snippets plugin
 local capabilities = vim.lsp.protocol.make_client_capabilities()
