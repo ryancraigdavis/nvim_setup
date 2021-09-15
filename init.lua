@@ -618,6 +618,15 @@ local stylua = function()
   }
 end
 
+-- Dockerfile-utils
+local dockerfile_utils = function()
+  return {
+    exe = "dockerfile-utils",
+    args = { "format" },
+    stdin = true,
+  }
+end
+
 -- Rustfmt
 local rustfmt = function()
   return {
@@ -658,6 +667,7 @@ require("formatter").setup({
     rust = { rustfmt },
     python = { black },
     sh = { shfmt },
+    dockerfile = { dockerfile_utils },
   },
 })
 
@@ -666,7 +676,7 @@ vim.api.nvim_exec(
   [[
 augroup FormatAutogroup
   autocmd!
-  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.lua,*.rs,*.py,*.sh : FormatWrite
+  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.lua,*.rs,*.py,*.sh,Dockerfile : FormatWrite
 augroup END
 ]],
   true
