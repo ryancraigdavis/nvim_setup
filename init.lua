@@ -43,7 +43,7 @@ local colors = {
 g.mapleader = " "
 
 -- Plugins
-require("paq-nvim")({
+require("paq")({
 
   -- Theme
   -- "tanvirtin/monokai.nvim",
@@ -52,10 +52,14 @@ require("paq-nvim")({
   -- Vim Diff on side/vim fugitive
   "airblade/vim-gitgutter",
   "tpope/vim-fugitive",
+  -- "lewis6991/gitsigns.nvim", - possibly for the future
 
   -- Nvim LSP Server
   "neovim/nvim-lspconfig",
-  "glepnir/lspsaga.nvim",
+
+  -- LSP Code Actions
+  -- "kosayoda/nvim-lightbulb",
+  -- "weilbith/nvim-code-action-menu",
 
   -- Additional Linting
   "mfussenegger/nvim-lint",
@@ -91,10 +95,21 @@ require("paq-nvim")({
   "mattn/emmet-vim",
 
   -- Autocompletion plugin
-  "hrsh7th/nvim-compe",
+  "hrsh7th/nvim-comp",
+  "hrsh7th/cmp-nvim-lsp",
+  "hrsh7th/cmp-buffer",
+  "hrsh7th/cmp-path",
+  "hrsh7th/cmp-cmdline",
+  "hrsh7th/nvim-cmp",
+  "f3fora/cmp-spell",
+  "ray-x/cmp-treesitter",
+  "hrsh7th/cmp-nvim-lua",
+  "windwp/nvim-autopairs",
 
   -- VSCode Snippet Feature in Nvim
+  "hrsh7th/cmp-vsnip",
   "hrsh7th/vim-vsnip",
+  "onsails/lspkind-nvim",
 
   -- Formatter
   "mhartington/formatter.nvim",
@@ -136,8 +151,8 @@ require("lualine").setup({
       { "filename", file_status = true, full_path = true },
       {
         "diagnostics",
-        sources = { "nvim_lsp" },
-        symbols = { error = " ", warn = " ", info = " " },
+        sources = { "nvim_diagnostic" },
+        symbols = { error = " ", warn = " ", info = " " },
         color_error = colors.red,
         color_warn = colors.yellow,
         color_info = colors.cyan,
@@ -169,8 +184,10 @@ require("lualine").setup({
 })
 
 -- File Tree for Nvim
-g.nvim_tree_auto_close = 1
 map("n", "<C-t>", ":NvimTreeToggle<cr>")
+require("nvim-tree").setup({
+  auto_close = true,
+})
 
 -- Hop
 require("hop").setup()
@@ -192,6 +209,7 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
     "additionalTextEdits",
   },
 }
+map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", { silent = true })
 
 -- LSP Server config
 require("lspconfig").pyright.setup({
@@ -210,13 +228,6 @@ require("lspconfig").pyright.setup({
 })
 
 require("lspconfig").rust_analyzer.setup({})
---[[
-require "lspconfig".dockerls.setup(
-  {
-    cmd = {"docker-langserver", "--stdio"},
-    filetypes = {"dockerfile", "Dockerfile"},
-  }
-) ]]
 
 require("lspconfig").cssls.setup({
   cmd = { "vscode-css-language-server", "--stdio" },
@@ -287,7 +298,7 @@ local shellcheck = {
   },
 }
 
-require("lspconfig").efm.setup({
+require("lspconfig")["efm"].setup({
   on_attach = function(client)
     client.resolved_capabilities.document_formatting = true
     client.resolved_capabilities.goto_definition = false
@@ -325,34 +336,6 @@ vim.lsp.diagnostic.show_line_diagnostics()
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
   virtual_text = false,
 })
-
--- LSP Saga config & keys https://github.com/glepnir/lspsaga.nvim
-local saga = require("lspsaga")
-saga.init_lsp_saga({
-  code_action_icon = " ",
-  definition_preview_icon = "  ",
-  dianostic_header_icon = "   ",
-  error_sign = " ",
-  finder_definition_icon = "  ",
-  finder_reference_icon = "  ",
-  hint_sign = "⚡",
-  infor_sign = "",
-  warn_sign = "",
-})
-
-map("n", "<Leader>cf", ":Lspsaga lsp_finder<CR>", { silent = true })
-map("n", "<leader>ca", ":Lspsaga code_action<CR>", { silent = true })
-map("v", "<leader>ca", ":<C-U>Lspsaga range_code_action<CR>", { silent = true })
-map("n", "<leader>ch", ":Lspsaga hover_doc<CR>", { silent = true })
-map("n", "<leader>ck", '<cmd>lua require("lspsaga.action").smart_scroll_with_saga(-1)<CR>', { silent = true })
-map("n", "<leader>cj", '<cmd>lua require("lspsaga.action").smart_scroll_with_saga(1)<CR>', { silent = true })
-map("n", "<leader>cs", ":Lspsaga signature_help<CR>", { silent = true })
-map("n", "<leader>ci", ":Lspsaga show_line_diagnostics<CR>", { silent = true })
-map("n", "<leader>cn", ":Lspsaga diagnostic_jump_next<CR>", { silent = true })
-map("n", "<leader>cp", ":Lspsaga diagnostic_jump_prev<CR>", { silent = true })
-map("n", "<leader>cr", ":Lspsaga rename<CR>", { silent = true })
-map("n", "<leader>cd", ":Lspsaga preview_definition<CR>", { silent = true })
-
 -- Setup treesitter
 local ts = require("nvim-treesitter.configs")
 ts.setup({ ensure_installed = "maintained", highlight = { enable = true } })
@@ -409,16 +392,13 @@ augroup END
 g.user_emmet_leader_key = "<C-w>"
 
 -- Debugger/Vimspector Config
-map("n", "<leader>dp", "oimport pudb; pudb.set_trace()<Esc>")
+map("n", "<leader>dp", "oimport pudb; pudb.set_trace()  # fmt: skip<Esc>")
 map("n", "<leader>z", ":MaximizerToggle!<CR>")
 g.vimspector_enable_mappings = "HUMAN"
 map("n", "<leader>da", ":call vimspector#Launch()<CR>")
 
 -- Camelcase Movement
 g.camelcasemotion_key = "<leader>"
--- Need to figure these out
--- map("v", ",i", "<Esc>l,bv,e")
--- map("o", ",i", ":normal v,i<CR>")
 
 -- Git fugitive
 map("n", "<leader>gs", ":Git<CR>")
@@ -432,38 +412,113 @@ map("n", "<leader>gp", ":Git push<CR>")
 map("v", "<C-c", ":w !pbcopy<CR><CR>")
 map("n", "<C-v", ":r !pbpaste<CR><CR>")
 
--- Autocompletion setup and start
-require("compe").setup({
-  enabled = true,
-  autocomplete = true,
-  debug = false,
-  min_length = 1,
-  preselect = "enable",
-  throttle_time = 80,
-  source_timeout = 200,
-  resolve_timeout = 800,
-  incomplete_delay = 400,
-  max_abbr_width = 100,
-  max_kind_width = 100,
-  max_menu_width = 100,
-  documentation = {
-    border = { "", "", "", " ", "", "", "", " " }, -- the border option is the same as `|help nvim_open_win|`
-    winhighlight = "NormalFloat:CompeDocumentation,FloatBorder:CompeDocumentationBorder",
-    max_width = 120,
-    min_width = 60,
-    max_height = math.floor(vim.o.lines * 0.3),
-    min_height = 1,
-  },
-  source = {
-    path = true,
-    buffer = true,
-    calc = true,
-    nvim_lsp = true,
-    nvim_lua = true,
-    vsnip = true,
-    luasnip = true,
+-- Config from https://github.com/whatsthatsmell/dots/blob/master/public%20dots/vim-nvim/lua/joel/completion/init.lua
+-- completion maps (not cmp) --
+-- line completion - use more!
+-- inoremap <C-l> <C-x><C-l>
+vim.api.nvim_set_keymap("i", "<c-l>", "<c-x><c-l>", { noremap = true })
+-- Vim command-line completion
+-- inoremap <C-v> <C-x><C-v>
+vim.api.nvim_set_keymap("i", "<c-v>", "<c-x><c-v>", { noremap = true })
+-- end non-cmp completion maps --
+
+-- Setup nvim-cmp
+local cmp = require("cmp")
+
+-- lspkind
+local lspkind = require("lspkind")
+lspkind.init({
+  with_text = true,
+  symbol_map = {
+    Text = "",
+    Method = "ƒ",
+    Function = "ﬦ",
+    Constructor = "",
+    Variable = "",
+    Class = "",
+    Interface = "ﰮ",
+    Module = "",
+    Property = "",
+    Unit = "",
+    Value = "",
+    Enum = "了",
+    Keyword = "",
+    Snippet = "﬌",
+    Color = "",
+    File = "",
+    Folder = "",
+    EnumMember = "",
+    Constant = "",
+    Struct = "",
   },
 })
+
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      vim.fn["vsnip#anonymous"](args.body)
+    end,
+  },
+  mapping = {
+    ["<C-d>"] = cmp.mapping.scroll_docs(-4),
+    ["<C-f>"] = cmp.mapping.scroll_docs(4),
+    ["<C-Space>"] = cmp.mapping.complete(),
+    ["<CR>"] = cmp.mapping({
+      i = cmp.mapping.confirm({ select = true }),
+    }),
+    ["<Right>"] = cmp.mapping({
+      i = cmp.mapping.confirm({ select = true }),
+    }),
+    ["<Tab>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "s" }),
+    ["<S-Tab>"] = cmp.mapping(cmp.mapping.select_prev_item(), { "i", "s" }),
+    ["<C-e>"] = cmp.mapping.abort(),
+    ["<Up>"] = cmp.mapping(cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }), { "i" }),
+    ["<Down>"] = cmp.mapping(cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }), { "i" }),
+  },
+  experimental = {
+    ghost_text = true,
+  },
+  documentation = {
+    border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
+  },
+  sources = {
+    -- 'crates' is lazy loaded
+    { name = "nvim_lsp" },
+    { name = "treesitter" },
+    { name = "vsnip" },
+    { name = "path" },
+    {
+      name = "buffer",
+      option = {
+        get_bufnrs = function()
+          return vim.api.nvim_list_bufs()
+        end,
+      },
+    },
+    { name = "spell" },
+  },
+  formatting = {
+    format = function(entry, vim_item)
+      vim_item.kind = string.format("%s %s", lspkind.presets.default[vim_item.kind], vim_item.kind)
+      vim_item.menu = ({
+        nvim_lsp = "ﲳ",
+        nvim_lua = "",
+        treesitter = "",
+        path = "ﱮ",
+        buffer = "﬘",
+        vsnip = "",
+        spell = "暈",
+      })[entry.source.name]
+
+      return vim_item
+    end,
+  },
+})
+
+-- insert `(` after select function or method item
+local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done({ map_char = { tex = "" } }))
+
 local t = function(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
@@ -476,34 +531,6 @@ local check_back_space = function()
     return false
   end
 end
-
--- Use (s-)tab to:
---- move to prev/next item in completion menuone
---- jump to prev/next snippet's placeholder
-_G.tab_complete = function()
-  if vim.fn.pumvisible() == 1 then
-    return t("<C-n>")
-  elseif check_back_space() then
-    return t("<Tab>")
-  else
-    return vim.fn["compe#complete"]()
-  end
-end
-_G.s_tab_complete = function()
-  if vim.fn.pumvisible() == 1 then
-    return t("<C-p>")
-  else
-    return t("<S-Tab>")
-  end
-end
-
-vim.api.nvim_set_keymap("i", "<CR>", "compe#confirm({ 'keys': '<CR>', 'select': v:true })", { expr = true })
-vim.api.nvim_set_keymap("i", "<Tab>", "v:lua.tab_complete()", { expr = true })
-vim.api.nvim_set_keymap("s", "<Tab>", "v:lua.tab_complete()", { expr = true })
-vim.api.nvim_set_keymap("i", "<S-Tab>", "v:lua.s_tab_complete()", { expr = true })
-vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", { expr = true })
-
--- End Compe related setup
 
 -- Highlight on yank
 cmd("au TextYankPost * lua vim.highlight.on_yank {on_visual = true}") -- disabled in visual mode
@@ -667,7 +694,6 @@ require("formatter").setup({
     rust = { rustfmt },
     python = { black },
     sh = { shfmt },
-    dockerfile = { dockerfile_utils },
   },
 })
 
@@ -676,7 +702,7 @@ vim.api.nvim_exec(
   [[
 augroup FormatAutogroup
   autocmd!
-  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.lua,*.rs,*.py,*.sh,Dockerfile : FormatWrite
+  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.lua,*.rs,*.py,*.sh: FormatWrite
 augroup END
 ]],
   true
