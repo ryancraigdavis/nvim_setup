@@ -1,8 +1,7 @@
--- Ryan Davis NeoVim 0.5 Lua Config
--- Inspiration from Ben Frain https://gist.github.com/benfrain/97f2b91087121b2d4ba0dcc4202d252f
+-- Ryan Davis NeoVim 0.6 Lua Config
 
 -- Dependencies
--- Plugins require Paq, a Lua package manager, installation found https://github.com/savq/paq-nvim
+-- Plugins require Packer, a Lua package manager, installation found https://github.com/wbthomason/packer.nvim
 -- LSP servers must be installed for each language
 -- Python = `npm install -g pyright`
 -- JS/TS ESLint, Docker, Lua = `brew install efm-langserver`
@@ -43,88 +42,86 @@ local colors = {
 g.mapleader = " "
 
 -- Plugins
-require("paq")({
+require("packer").startup(function(use)
 
   -- Theme
   -- "tanvirtin/monokai.nvim",
-  "folke/tokyonight.nvim",
+  use "folke/tokyonight.nvim"
 
   -- Vim Diff on side/vim fugitive
-  "airblade/vim-gitgutter",
-  "tpope/vim-fugitive",
+  use "airblade/vim-gitgutter"
+  use "tpope/vim-fugitive"
   -- "lewis6991/gitsigns.nvim", - possibly for the future
 
   -- Nvim LSP Server
-  "neovim/nvim-lspconfig",
+  use "neovim/nvim-lspconfig"
 
   -- LSP Code Actions
-  -- "kosayoda/nvim-lightbulb",
-  -- "weilbith/nvim-code-action-menu",
+  use "kosayoda/nvim-lightbulb"
+  use {"weilbith/nvim-code-action-menu", cmd = "CodeActionMenu"}
 
   -- Additional Linting
-  "mfussenegger/nvim-lint",
+  use "mfussenegger/nvim-lint"
 
   -- Status Line and Buffer Line in Lua
-  "hoob3rt/lualine.nvim",
-  "romgrk/barbar.nvim",
+  use "hoob3rt/lualine.nvim"
+  use "romgrk/barbar.nvim"
 
   -- File Tree
-  "kyazdani42/nvim-tree.lua",
-  "kyazdani42/nvim-web-devicons",
+  use "kyazdani42/nvim-tree.lua"
+  use "kyazdani42/nvim-web-devicons"
 
   -- Auto pairs and bracket surroundings
-  "jiangmiao/auto-pairs",
-  "blackCauldron7/surround.nvim",
+  use "jiangmiao/auto-pairs"
+  use "blackCauldron7/surround.nvim"
 
   -- Commenting
-  "b3nj5m1n/kommentary",
+  use "b3nj5m1n/kommentary"
 
   -- "Hop" navigation
-  "phaazon/hop.nvim",
+  use "phaazon/hop.nvim"
 
   -- Debugger
-  "puremourning/vimspector",
-  "szw/vim-maximizer",
+  use "puremourning/vimspector"
+  use "szw/vim-maximizer"
 
   -- Camelcase Movement
-  "chaoren/vim-wordmotion",
-  "bkad/CamelCaseMotion",
+  use "chaoren/vim-wordmotion"
+  use "bkad/CamelCaseMotion"
 
   -- HTML Tag completion
   -- https://docs.emmet.io/abbreviations/syntax/
-  "mattn/emmet-vim",
+  use "mattn/emmet-vim"
 
   -- Autocompletion plugin
-  "hrsh7th/nvim-comp",
-  "hrsh7th/cmp-nvim-lsp",
-  "hrsh7th/cmp-buffer",
-  "hrsh7th/cmp-path",
-  "hrsh7th/cmp-cmdline",
-  "hrsh7th/nvim-cmp",
-  "f3fora/cmp-spell",
-  "ray-x/cmp-treesitter",
-  "hrsh7th/cmp-nvim-lua",
-  "windwp/nvim-autopairs",
+  use "hrsh7th/nvim-comp"
+  use "hrsh7th/cmp-nvim-lsp"
+  use "hrsh7th/cmp-buffer"
+  use "hrsh7th/cmp-path"
+  use "hrsh7th/cmp-cmdline"
+  use "hrsh7th/nvim-cmp"
+  use "f3fora/cmp-spell"
+  use "ray-x/cmp-treesitter"
+  use "hrsh7th/cmp-nvim-lua"
+  use "windwp/nvim-autopairs"
 
   -- VSCode Snippet Feature in Nvim
-  "hrsh7th/cmp-vsnip",
-  "hrsh7th/vim-vsnip",
-  "onsails/lspkind-nvim",
+  use "hrsh7th/cmp-vsnip"
+  use "hrsh7th/vim-vsnip"
+  use "onsails/lspkind-nvim"
 
   -- Formatter
-  "mhartington/formatter.nvim",
+  use "mhartington/formatter.nvim"
 
   -- Telescope Finder
-  "nvim-lua/plenary.nvim",
-  "nvim-lua/popup.nvim",
-  "nvim-telescope/telescope.nvim",
+  use "nvim-lua/plenary.nvim"
+  use "nvim-lua/popup.nvim"
+  use "nvim-telescope/telescope.nvim"
 
   -- Treesitter for NeoVim
-  "nvim-treesitter/nvim-treesitter",
+  use "nvim-treesitter/nvim-treesitter"
 
-  -- Package Manager
-  "savq/paq-nvim",
-})
+end)
 
 -- Theme Config
 g.tokyonight_style = "storm"
@@ -209,7 +206,6 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
     "additionalTextEdits",
   },
 }
-map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", { silent = true })
 
 -- LSP Server config
 require("lspconfig").pyright.setup({
@@ -228,6 +224,8 @@ require("lspconfig").pyright.setup({
 })
 
 require("lspconfig").rust_analyzer.setup({})
+
+require("lspconfig").sumneko_lua.setup({})
 
 require("lspconfig").cssls.setup({
   cmd = { "vscode-css-language-server", "--stdio" },
@@ -336,6 +334,10 @@ vim.lsp.diagnostic.show_line_diagnostics()
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
   virtual_text = false,
 })
+-- CodeActionMenu
+map("n", "<leader>ca", ":CodeActionMenu<CR>")
+map("v", "<leader>ca", ":CodeActionMenu<CR>")
+
 -- Setup treesitter
 local ts = require("nvim-treesitter.configs")
 ts.setup({ ensure_installed = "maintained", highlight = { enable = true } })
@@ -690,7 +692,6 @@ require("formatter").setup({
     css = { prettier },
     scss = { prettier },
     markdown = { prettier },
-    lua = { stylua },
     rust = { rustfmt },
     python = { black },
     sh = { shfmt },
@@ -702,7 +703,7 @@ vim.api.nvim_exec(
   [[
 augroup FormatAutogroup
   autocmd!
-  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.lua,*.rs,*.py,*.sh: FormatWrite
+  autocmd BufWritePost *.js,*.ts,*.css,*.scss,*.md,*.html,*.rs,*.py,*.sh: FormatWrite
 augroup END
 ]],
   true
