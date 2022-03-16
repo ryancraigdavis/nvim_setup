@@ -62,7 +62,6 @@ require("packer").startup(function(use)
 
   -- Vim Diff on side/vim fugitive
   use "airblade/vim-gitgutter"
-  use "tpope/vim-fugitive"
   use "kdheepak/lazygit.nvim"
 
   -- Nvim LSP Server
@@ -438,14 +437,8 @@ map("n", "<leader>da", ":call vimspector#Launch()<CR>")
 -- Camelcase Movement
 g.camelcasemotion_key = "<leader>"
 
--- Git fugitive
+-- LazyGit
 map("n", "<leader>gs", ":LazyGit<CR>")
-map("n", "<leader>gl", ":Git<CR>")
-map("n", "<leader>gd", ":Gdiff<CR>")
-map("n", "<leader>gf", ":diffget //3<CR>")
-map("n", "<leader>gj", ":diffget //2<CR>")
-map("n", "<leader>gc", ":Git commit<CR>")
-map("n", "<leader>gp", ":Git push<CR>")
 
 -- Copy and Paste from Clipboard
 map("v", "<C-c", ":w !pbcopy<CR><CR>")
