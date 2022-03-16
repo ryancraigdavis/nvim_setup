@@ -41,6 +41,18 @@ local colors = {
 -- Map leader to space
 g.mapleader = " "
 
+local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
+if fn.empty(fn.glob(install_path)) > 0 then
+  packer_bootstrap = fn.system({
+    "git",
+    "clone",
+    "--depth",
+    "1",
+    "https://github.com/wbthomason/packer.nvim",
+    install_path,
+  })
+end
+
 -- Plugins
 require("packer").startup(function(use)
 
@@ -51,14 +63,13 @@ require("packer").startup(function(use)
   -- Vim Diff on side/vim fugitive
   use "airblade/vim-gitgutter"
   use "tpope/vim-fugitive"
-  -- "lewis6991/gitsigns.nvim", - possibly for the future
+  use "kdheepak/lazygit.nvim"
 
   -- Nvim LSP Server
   use "neovim/nvim-lspconfig"
 
   -- LSP Code Actions
   use "kosayoda/nvim-lightbulb"
-  use {"weilbith/nvim-code-action-menu", cmd = "CodeActionMenu"}
 
   -- Additional Linting
   use "mfussenegger/nvim-lint"
@@ -94,7 +105,6 @@ require("packer").startup(function(use)
   use "mattn/emmet-vim"
 
   -- Autocompletion plugin
-  use "hrsh7th/nvim-comp"
   use "hrsh7th/cmp-nvim-lsp"
   use "hrsh7th/cmp-buffer"
   use "hrsh7th/cmp-path"
@@ -121,6 +131,10 @@ require("packer").startup(function(use)
   -- Treesitter for NeoVim
   use "nvim-treesitter/nvim-treesitter"
 
+  -- If not setup, run PackerSync
+  if packer_bootstrap then
+    require("packer").sync()
+  end
 end)
 
 -- Theme Config
@@ -330,13 +344,35 @@ require("lspconfig")["efm"].setup({
 })
 
 -- LSP Prevents inline buffer annotations
-vim.lsp.diagnostic.show_line_diagnostics()
+
+local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+for type, icon in pairs(signs) do
+  local hl = "DiagnosticSign" .. type
+  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+end
+
+vim.diagnostic.open_float(nil, {
+    source = 'always'
+})
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
   virtual_text = false,
 })
--- CodeActionMenu
-map("n", "<leader>ca", ":CodeActionMenu<CR>")
-map("v", "<leader>ca", ":CodeActionMenu<CR>")
+
+local nvim_lsp = require('lspconfig')
+-- Use a loop to conveniently call 'setup' on multiple servers and
+-- map buffer local keybindings when the language server attaches
+local servers = { 'pyright', 'rust_analyzer', 'tsserver' }
+for _, lsp in ipairs(servers) do
+  nvim_lsp[lsp].setup {
+    on_attach = on_attach,
+    flags = {
+      debounce_text_changes = 150,
+    }
+  }
+end
+
+
+map("n", "<leader>ce", '<cmd>lua vim.diagnostic.open_float()<CR>')
 
 -- Setup treesitter
 local ts = require("nvim-treesitter.configs")
@@ -403,7 +439,8 @@ map("n", "<leader>da", ":call vimspector#Launch()<CR>")
 g.camelcasemotion_key = "<leader>"
 
 -- Git fugitive
-map("n", "<leader>gs", ":Git<CR>")
+map("n", "<leader>gs", ":LazyGit<CR>")
+map("n", "<leader>gl", ":Git<CR>")
 map("n", "<leader>gd", ":Gdiff<CR>")
 map("n", "<leader>gf", ":diffget //3<CR>")
 map("n", "<leader>gj", ":diffget //2<CR>")
@@ -430,7 +467,7 @@ local cmp = require("cmp")
 -- lspkind
 local lspkind = require("lspkind")
 lspkind.init({
-  with_text = true,
+  mode = 'symbol_text',
   symbol_map = {
     Text = "",
     Method = "ƒ",
