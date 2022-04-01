@@ -1,4 +1,4 @@
--- Ryan Davis NeoVim 0.6 Lua Config
+-- Ryan Davis NeoVim 0.6.1 Lua Config
 
 -- Dependencies
 -- Plugins require Packer, a Lua package manager, installation found https://github.com/wbthomason/packer.nvim
@@ -68,7 +68,7 @@ require("packer").startup(function(use)
   use "neovim/nvim-lspconfig"
 
   -- LSP Code Actions
-  use "kosayoda/nvim-lightbulb"
+  -- use "kosayoda/nvim-lightbulb"
 
   -- Additional Linting
   use "mfussenegger/nvim-lint"
@@ -81,9 +81,21 @@ require("packer").startup(function(use)
   use "kyazdani42/nvim-tree.lua"
   use "kyazdani42/nvim-web-devicons"
 
+  -- LSP Diagnostics
+  use {
+    "folke/trouble.nvim",
+    requires = "kyazdani42/nvim-web-devicons",
+    config = function()
+      require("trouble").setup {
+        mode = "document_diagnostics",
+        auto_open = true,
+        auto_close = true,
+      }
+    end
+  }
   -- Auto pairs and bracket surroundings
   use "jiangmiao/auto-pairs"
-  use "blackCauldron7/surround.nvim"
+  use "ur4ltz/surround.nvim"
 
   -- Commenting
   use "b3nj5m1n/kommentary"
@@ -195,9 +207,7 @@ require("lualine").setup({
 
 -- File Tree for Nvim
 map("n", "<C-t>", ":NvimTreeToggle<cr>")
-require("nvim-tree").setup({
-  auto_close = true,
-})
+require("nvim-tree").setup({})
 
 -- Hop
 require("hop").setup()
@@ -372,6 +382,9 @@ end
 
 
 map("n", "<leader>ce", '<cmd>lua vim.diagnostic.open_float()<CR>')
+map("n", "<leader>cn", '<cmd>lua vim.diagnostic.goto_next()<CR>')
+map("n", "<leader>csl", '<cmd>lua vim.diagnostic.show_line_diagnostics()<CR>')
+map("n", "<C-q>", '<cmd>TroubleToggle<CR>')
 
 -- Setup treesitter
 local ts = require("nvim-treesitter.configs")
@@ -580,8 +593,8 @@ map("v", "y", "ygv<Esc>")
 map("n", "<leader>w", "<cmd>:w<CR>")
 
 -- Tab to switch buffers in Normal mode
-map("n", "<Tab>", ":bnext<CR>")
-map("n", "<S-Tab>", ":bprevious<CR>")
+map("n", "<Tab>", ":bnext<CR> :TroubleRefresh<CR>")
+map("n", "<S-Tab>", ":bprevious<CR> :TroubleRefresh<CR>")
 
 -- Line bubbling
 -- Use these two if you don't have prettier
@@ -639,22 +652,6 @@ map("n", "<leader>vb", '<cmd>lua require("telescope.builtin").buffers()<cr>')
 map("n", "<leader>vh", '<cmd>lua require("telescope.builtin").help_tags()<cr>')
 map("n", "<leader>vs", '<cmd>lua require("telescope.builtin").search_history()<cr>')
 map("n", "<leader>vt", '<cmd>lua require("telescope.builtin").treesitter()<cr>')
--- Telescope Git Pickers
-map(
-  "n",
-  "<leader>is",
-  '<cmd>lua require("telescope.builtin").git_status(require("telescope.themes").get_dropdown({}))<cr>'
-)
-map(
-  "n",
-  "<leader>ic",
-  '<cmd>lua require("telescope.builtin").git_commits(require("telescope.themes").get_dropdown({}))<cr>'
-)
-map(
-  "n",
-  "<leader>ib",
-  '<cmd>lua require("telescope.builtin").git_branches(require("telescope.themes").get_dropdown({}))<cr>'
-)
 -- Telescope LSP Pickers
 map("n", "<leader>rr", '<cmd>lua require("telescope.builtin").lsp_references()<cr>')
 
