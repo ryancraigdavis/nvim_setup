@@ -1,27 +1,16 @@
--- Ryan Davis NeoVim 0.6.1 Lua Config
+-- Ryan Davis NeoVim 0.9.1 Lua Config
 
 -- Dependencies
 -- Plugins require Packer, a Lua package manager, installation found https://github.com/wbthomason/packer.nvim
--- LSP servers must be installed for each language
--- Python = `npm install -g pyright`
--- JS/TS ESLint, Docker, Lua = `brew install efm-langserver`
--- TypeScript = `npm install -g typescript typescript-language-server`
--- Rust = Download from https://github.com/rust-analyzer/rust-analyzer/releases
---    rename `rust-analyzer` | chmod and put into path
--- Formatter also requires that each formmatter (black for Python) be installed as well
+-- LSP servers, debuggers, linters, and formatters are managed with Mason
 
 -- Lua variables for setting various commands, functions, etc.
 local cmd = vim.cmd -- to execute Vim commands e.g. cmd('pwd')
 local fn = vim.fn -- to call Vim functions e.g. fn.bufnr()
 local g = vim.g -- a table to access global variables
 local opt = vim.opt -- to set options
-
-local function map(mode, lhs, rhs, opts)
-  local options = { noremap = true }
-  if opts then
-    options = vim.tbl_extend("force", options, opts)
-  end
-  vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+local function map(mode, lhs, rhs)
+  vim.keymap.set(mode, lhs, rhs)
 end
 
 local colors = {
@@ -57,7 +46,6 @@ end
 require("packer").startup(function(use)
 
   -- Theme
-  -- "tanvirtin/monokai.nvim",
   use "folke/tokyonight.nvim"
 
   -- Vim Diff on side/vim fugitive
@@ -66,9 +54,7 @@ require("packer").startup(function(use)
 
   -- Nvim LSP Server
   use "neovim/nvim-lspconfig"
-
-  -- LSP Code Actions
-  -- use "kosayoda/nvim-lightbulb"
+  use "williamboman/mason-lspconfig.nvim"
 
   -- Additional Linting
   use "mfussenegger/nvim-lint"
@@ -77,25 +63,41 @@ require("packer").startup(function(use)
   use "hoob3rt/lualine.nvim"
   use "romgrk/barbar.nvim"
 
+  -- Github Copilot
+  -- use "github/copilot.vim"
+  use "zbirenbaum/copilot.lua"
+  use {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({})
+    end,
+  }
+  use {
+    "zbirenbaum/copilot-cmp",
+    after = { "copilot.lua" },
+    config = function ()
+      require("copilot_cmp").setup()
+    end
+  }
+
   -- File Tree
   use "kyazdani42/nvim-tree.lua"
   use "kyazdani42/nvim-web-devicons"
 
-  -- LSP Diagnostics
-  use {
-    "folke/trouble.nvim",
-    requires = "kyazdani42/nvim-web-devicons",
-    config = function()
-      require("trouble").setup {
-        mode = "document_diagnostics",
-        auto_open = true,
-        auto_close = true,
-      }
-    end
-  }
+  -- LSP Diagnostics Config
+  use "WhoIsSethDaniel/toggle-lsp-diagnostics.nvim"
+
+
   -- Auto pairs and bracket surroundings
   use "jiangmiao/auto-pairs"
-  use "ur4ltz/surround.nvim"
+  use {
+    "ur4ltz/surround.nvim",
+    config = function()
+      require"surround".setup {mappings_style = "sandwich"}
+    end
+  }
 
   -- Commenting
   use "b3nj5m1n/kommentary"
@@ -104,7 +106,10 @@ require("packer").startup(function(use)
   use "phaazon/hop.nvim"
 
   -- Debugger
-  use "puremourning/vimspector"
+  use "williamboman/mason.nvim"
+  use "mfussenegger/nvim-dap"
+  use "mfussenegger/nvim-dap-python"
+  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
   use "szw/vim-maximizer"
 
   -- Camelcase Movement
@@ -138,6 +143,7 @@ require("packer").startup(function(use)
   use "nvim-lua/plenary.nvim"
   use "nvim-lua/popup.nvim"
   use "nvim-telescope/telescope.nvim"
+  use "jvgrootveld/telescope-zoxide"
 
   -- Treesitter for NeoVim
   use "nvim-treesitter/nvim-treesitter"
@@ -149,7 +155,7 @@ require("packer").startup(function(use)
 end)
 
 -- Theme Config
-g.tokyonight_style = "storm"
+g.tokyonight_style = "night"
 g.tokyonight_italic_comments = true
 
 opt.termguicolors = true -- You will have bad experience for diagnostic messages when it's default 4000.
@@ -230,6 +236,10 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
   },
 }
 
+-- Mason LSP/Debug/DAP manager
+require("mason").setup()
+require("mason-lspconfig").setup()
+
 -- LSP Server config
 require("lspconfig").pyright.setup({
   cmd = { "pyright-langserver", "--stdio" },
@@ -248,7 +258,19 @@ require("lspconfig").pyright.setup({
 
 require("lspconfig").rust_analyzer.setup({})
 
-require("lspconfig").sumneko_lua.setup({})
+-- C++, Swift, and C
+-- require'lspconfig'.sourcekit.setup{}
+require'lspconfig'.clangd.setup{}
+
+require("lspconfig").lua_ls.setup({
+  settings = {
+    Lua = {
+      diagnostics = {
+        globals = {"vim"},
+      }
+    }
+  }
+})
 
 require("lspconfig").cssls.setup({
   cmd = { "vscode-css-language-server", "--stdio" },
@@ -363,10 +385,6 @@ end
 vim.diagnostic.open_float(nil, {
     source = 'always'
 })
-vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-  virtual_text = false,
-})
-
 local nvim_lsp = require('lspconfig')
 -- Use a loop to conveniently call 'setup' on multiple servers and
 -- map buffer local keybindings when the language server attaches
@@ -383,12 +401,11 @@ end
 
 map("n", "<leader>ce", '<cmd>lua vim.diagnostic.open_float()<CR>')
 map("n", "<leader>cn", '<cmd>lua vim.diagnostic.goto_next()<CR>')
-map("n", "<leader>csl", '<cmd>lua vim.diagnostic.show_line_diagnostics()<CR>')
-map("n", "<C-q>", '<cmd>TroubleToggle<CR>')
+map("n", "<C-q>", '<Plug>(toggle-lsp-diag-vtext)')
 
 -- Setup treesitter
 local ts = require("nvim-treesitter.configs")
-ts.setup({ ensure_installed = "maintained", highlight = { enable = true } })
+ts.setup({ ensure_installed = {"python", "rust"}, highlight = { enable = true } })
 
 -- Various options
 opt.number = true
@@ -424,6 +441,7 @@ opt.splitright = true -- Put new windows right of current
 opt.tabstop = 2 -- Number of spaces tabs count for
 opt.updatetime = 250 -- don't give |ins-completion-menu| messages.
 opt.wrap = true
+opt.mouse = --Disables mouse mode
 
 -- Use spelling for markdown files ‘]s’ to find next, ‘[s’ for previous, 'z=‘ for suggestions when on one.
 -- Source: http:--thejakeharding.com/tutorial/2012/06/13/using-spell-check-in-vim.html
@@ -441,12 +459,88 @@ augroup END
 -- HTML Tag completion
 g.user_emmet_leader_key = "<C-w>"
 
--- Debugger/Vimspector Config
+-- Debugger/DAP Config
+local dap = require('dap')
+require("dapui").setup()
+dap.adapters.lldb = {
+  type = 'executable',
+  command = '/usr/local/opt/llvm/bin/lldb-vscode',
+  name = 'lldb'
+}
+require('dap-python').setup('~/.virtualenvs/debugpy/bin/python')
+--[[ dap.adapters.python = {
+  type = 'executable';
+  command = '/Users/ryandavis/.local/share/nvim/mason/packages/debugpy/debugpy';
+  args = { '-m', 'debugpy.adapter' };
+} ]]
+dap.configurations.cpp = {
+  {
+    name = 'Launch',
+    type = 'lldb',
+    request = 'launch',
+    program = function()
+      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+    end,
+    cwd = '${workspaceFolder}',
+    stopOnEntry = false,
+    args = {},
+
+    -- 💀
+    -- if you change `runInTerminal` to true, you might need to change the yama/ptrace_scope setting:
+    --
+    --    echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+    --
+    -- Otherwise you might get the following error:
+    --
+    --    Error on launch: Failed to attach to the target process
+    --
+    -- But you should be aware of the implications:
+    -- https://www.kernel.org/doc/html/latest/admin-guide/LSM/Yama.html
+    -- runInTerminal = false,
+  },
+}
+map("n", "<leader>da", ":call vimspector#Launch()<CR>")
+-- require('dap').set_log_level('INFO')
+dap.defaults.fallback.terminal_win_cmd = '20split new'
+vim.fn.sign_define('DapBreakpoint',
+                   {text = '🟥', texthl = '', linehl = '', numhl = ''})
+vim.fn.sign_define('DapBreakpointRejected',
+                   {text = '🟦', texthl = '', linehl = '', numhl = ''})
+vim.fn.sign_define('DapStopped',
+                   {text = '⭐️', texthl = '', linehl = '', numhl = ''})
+
+vim.keymap.set('n', '<leader>dh',
+               function() require"dap".toggle_breakpoint() end)
+vim.keymap.set('n', '<leader>dH',
+               ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>")
+vim.keymap.set({'n', 't'}, '<C-k>', function() require"dap".step_out() end)
+vim.keymap.set({'n', 't'}, "<C-l>", function() require"dap".step_into() end)
+vim.keymap.set({'n', 't'}, '<C-j>', function() require"dap".step_over() end)
+vim.keymap.set({'n', 't'}, '<C-h>', function() require"dap".continue() end)
+vim.keymap.set('n', '<leader>dn', function() require"dap".run_to_cursor() end)
+vim.keymap.set('n', '<leader>dc', function() require"dap".terminate() end)
+vim.keymap.set('n', '<leader>dR',
+               function() require"dap".clear_breakpoints() end)
+vim.keymap.set('n', '<leader>de',
+               function() require"dap".set_exception_breakpoints({"all"}) end)
+vim.keymap.set('n', '<leader>da', function() require"debugHelper".attach() end)
+vim.keymap.set('n', '<leader>dA',
+               function() require"debugHelper".attachToRemote() end)
+vim.keymap
+    .set('n', '<leader>di', function() require"dap.ui.widgets".hover() end)
+vim.keymap.set('n', '<leader>d?', function()
+    local widgets = require "dap.ui.widgets";
+    widgets.centered_float(widgets.scopes)
+end)
+vim.keymap.set('n', '<leader>dk', ':lua require"dap".up()<CR>zz')
+vim.keymap.set('n', '<leader>dj', ':lua require"dap".down()<CR>zz')
+vim.keymap.set('n', '<leader>dr',
+               ':lua require"dap".repl.toggle({}, "vsplit")<CR><C-w>l')
+vim.keymap.set('n', '<leader>du', ':lua require"dapui".toggle()<CR>')
+
+
 map("n", "<leader>dp", "oimport pudb; pudb.set_trace()  # fmt: skip<Esc>")
 map("n", "<leader>z", ":MaximizerToggle!<CR>")
-g.vimspector_enable_mappings = "HUMAN"
-map("n", "<leader>da", ":call vimspector#Launch()<CR>")
-
 -- Camelcase Movement
 g.camelcasemotion_key = "<leader>"
 
@@ -460,11 +554,9 @@ map("n", "<C-v", ":r !pbpaste<CR><CR>")
 -- Config from https://github.com/whatsthatsmell/dots/blob/master/public%20dots/vim-nvim/lua/joel/completion/init.lua
 -- completion maps (not cmp) --
 -- line completion - use more!
--- inoremap <C-l> <C-x><C-l>
-vim.api.nvim_set_keymap("i", "<c-l>", "<c-x><c-l>", { noremap = true })
+map("i", "<c-l>", "<c-x><c-l>")
 -- Vim command-line completion
--- inoremap <C-v> <C-x><C-v>
-vim.api.nvim_set_keymap("i", "<c-v>", "<c-x><c-v>", { noremap = true })
+map("i", "<c-v>", "<c-x><c-v>")
 -- end non-cmp completion maps --
 
 -- Setup nvim-cmp
@@ -523,9 +615,6 @@ cmp.setup({
   experimental = {
     ghost_text = true,
   },
-  documentation = {
-    border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
-  },
   sources = {
     -- 'crates' is lazy loaded
     { name = "nvim_lsp" },
@@ -564,19 +653,6 @@ cmp.setup({
 local cmp_autopairs = require("nvim-autopairs.completion.cmp")
 cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done({ map_char = { tex = "" } }))
 
-local t = function(str)
-  return vim.api.nvim_replace_termcodes(str, true, true, true)
-end
-
-local check_back_space = function()
-  local col = vim.fn.col(".") - 1
-  if col == 0 or vim.fn.getline("."):sub(col, col):match("%s") then
-    return true
-  else
-    return false
-  end
-end
-
 -- Highlight on yank
 cmd("au TextYankPost * lua vim.highlight.on_yank {on_visual = true}") -- disabled in visual mode
 
@@ -593,25 +669,25 @@ map("v", "y", "ygv<Esc>")
 map("n", "<leader>w", "<cmd>:w<CR>")
 
 -- Tab to switch buffers in Normal mode
-map("n", "<Tab>", ":bnext<CR> :TroubleRefresh<CR>")
-map("n", "<S-Tab>", ":bprevious<CR> :TroubleRefresh<CR>")
+map("n", "<Tab>", ":bnext<CR>")
+map("n", "<S-Tab>", ":bprevious<CR>")
 
 -- Line bubbling
 -- Use these two if you don't have prettier
 --map('n'), '<c-j>', '<cmd>m .+1<CR>==')
 --map('n,) <c-k>', '<cmd>m .-2<CR>==')
-map("n", "<c-j>", "<cmd>m .+1<CR>", { silent = true })
-map("n", "<c-k>", "<cmd>m .-2<CR>", { silent = true })
-map("i", "<c-j> <Esc>", "<cmd>m .+1<CR>==gi", { silent = true })
-map("i", "<c-k> <Esc>", "<cmd>m .-2<CR>==gi", { silent = true })
-map("v", "<c-j>", "<cmd>m +1<CR>gv=gv", { silent = true })
-map("v", "<c-k>", "<cmd>m -2<CR>gv=gv", { silent = true })
+map("n", "<c-j>", "<cmd>m .+1<CR>")
+map("n", "<c-k>", "<cmd>m .-2<CR>")
+map("i", "<c-j> <Esc>", "<cmd>m .+1<CR>==gi")
+map("i", "<c-k> <Esc>", "<cmd>m .-2<CR>==gi")
+map("v", "<c-j>", "<cmd>m +1<CR>gv=gv")
+map("v", "<c-k>", "<cmd>m -2<CR>gv=gv")
 
 --Auto close tags
 map("i", ",/", "</<C-X><C-O>")
 
 --After searching, pressing escape stops the highlight
-map("n", "<esc>", ":noh<cr><esc>", { silent = true })
+map("n", "<esc>", ":noh<cr><esc>")
 
 -- Telescope Global remapping
 local actions = require("telescope.actions")
@@ -639,21 +715,21 @@ require("telescope").setup({
     },
   },
 })
-
+require'telescope'.load_extension('zoxide')
 -- Telescope File Pickers
-map("n", "<leader>fs", '<cmd>lua require("telescope.builtin").find_files()<cr>')
-map("n", "<leader>fg", '<cmd>lua require("telescope.builtin").live_grep()<cr>')
-map("n", "<leader>fr", '<cmd>lua require("telescope.builtin").grep_string()<cr>')
-map("n", "<leader>ff", '<cmd>lua require("telescope.builtin").file_browser({ hidden = true })<cr>')
+map("n", "<leader>fs", "<cmd>lua require('telescope.builtin').find_files()<cr>")
+map("n", "<leader>fc", "<cmd>lua require('telescope.builtin').spell_suggest()<cr>")
+map("n", "<leader>fg", "<cmd>lua require('telescope.builtin').live_grep()<cr>")
+map("n", "<leader>fr", "<cmd>lua require('telescope.builtin').grep_string()<cr>")
+map("n", "<leader>ff", "<cmd>lua require('telescope.builtin').file_browser({ hidden = true })<cr>")
+map("n", "<leader>ft", ":lua require'telescope'.extensions.zoxide.list{}<CR>")
+
 -- Telescope Vim Pickers
-map("n", "<leader>vr", '<cmd>lua require("telescope.builtin").registers()<cr>')
-map("n", "<leader>vm", '<cmd>lua require("telescope.builtin").marks()<cr>')
-map("n", "<leader>vb", '<cmd>lua require("telescope.builtin").buffers()<cr>')
-map("n", "<leader>vh", '<cmd>lua require("telescope.builtin").help_tags()<cr>')
-map("n", "<leader>vs", '<cmd>lua require("telescope.builtin").search_history()<cr>')
-map("n", "<leader>vt", '<cmd>lua require("telescope.builtin").treesitter()<cr>')
+map("n", "<leader>vr", "<cmd>lua require('telescope.builtin').registers()<cr>")
+map("n", "<leader>vm", "<cmd>lua require('telescope.builtin').marks()<cr>")
+map("n", "<leader>vb", "<cmd>lua require('telescope.builtin').buffers()<cr>")
 -- Telescope LSP Pickers
-map("n", "<leader>rr", '<cmd>lua require("telescope.builtin").lsp_references()<cr>')
+map("n", "<leader>rr", "<cmd>lua require('telescope.builtin').lsp_references()<cr>")
 
 -- Formatter
 -- Prettier
@@ -661,24 +737,6 @@ local prettier = function()
   return {
     exe = "prettier",
     args = { "--stdin-filepath", vim.api.nvim_buf_get_name(0), "--double-quote" },
-    stdin = true,
-  }
-end
-
--- Stylua
-local stylua = function()
-  return {
-    exe = "stylua",
-    args = { "--indent-width", 2, "--indent-type", "Spaces" },
-    stdin = false,
-  }
-end
-
--- Dockerfile-utils
-local dockerfile_utils = function()
-  return {
-    exe = "dockerfile-utils",
-    args = { "format" },
     stdin = true,
   }
 end
@@ -692,11 +750,20 @@ local rustfmt = function()
   }
 end
 
--- ShFmt (WIP)
+-- ShFmt
 local shfmt = function()
   return {
     exe = "shfmt",
     args = { "-ci", "-s", "-bn" },
+    stdin = true,
+  }
+end
+
+--C++
+local clang_format = function()
+  return {
+    exe = "clang-format",
+    args = { "-i", vim.api.nvim_buf_get_name(0) },
     stdin = true,
   }
 end
@@ -718,6 +785,7 @@ require("formatter").setup({
     html = { prettier },
     css = { prettier },
     scss = { prettier },
+    cpp = { clang_format },
     markdown = { prettier },
     rust = { rustfmt },
     python = { black },
