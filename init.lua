@@ -52,6 +52,14 @@ require("packer").startup(function(use)
   use "airblade/vim-gitgutter"
   use "kdheepak/lazygit.nvim"
 
+  --Git Conflict Resolution
+  use {'akinsho/git-conflict.nvim', tag = "*", config = function()
+    require('git-conflict').setup{
+      default_mappings = false
+    }
+    end
+  }
+
   -- Nvim LSP Server
   use "neovim/nvim-lspconfig"
   use "williamboman/mason-lspconfig.nvim"
@@ -730,6 +738,14 @@ map("n", "<leader>vm", "<cmd>lua require('telescope.builtin').marks()<cr>")
 map("n", "<leader>vb", "<cmd>lua require('telescope.builtin').buffers()<cr>")
 -- Telescope LSP Pickers
 map("n", "<leader>rr", "<cmd>lua require('telescope.builtin').lsp_references()<cr>")
+
+-- Git Conflict Resolution Mapping
+map("n", "<leader>co", "<Plug>(git-conflict-ours)")
+map("n", "<leader>ct", "<Plug>(git-conflict-theirs)")
+map("n", "<leader>cb", "<Plug>(git-conflict-both)")
+map("n", "<leader>c0", "<Plug>(git-conflict-none)")
+map("n", "<leader>cl", "<Plug>(git-conflict-prev-conflict)")
+map("n", "<leader>ch", "<Plug>(git-conflict-next-conflict)")
 
 -- Formatter
 -- Prettier
