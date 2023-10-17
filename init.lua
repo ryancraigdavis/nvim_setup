@@ -1,4 +1,4 @@
--- Ryan Davis NeoVim 0.9.1 Lua Config
+
 
 -- Dependencies
 -- Plugins require Packer, a Lua package manager, installation found https://github.com/wbthomason/packer.nvim
@@ -49,16 +49,7 @@ require("packer").startup(function(use)
   use "folke/tokyonight.nvim"
 
   -- Vim Diff on side/vim fugitive
-  use "airblade/vim-gitgutter"
   use "kdheepak/lazygit.nvim"
-
-  --Git Conflict Resolution
-  use {'akinsho/git-conflict.nvim', tag = "*", config = function()
-    require('git-conflict').setup{
-      default_mappings = false
-    }
-    end
-  }
 
   -- Nvim LSP Server
   use "neovim/nvim-lspconfig"
@@ -73,7 +64,7 @@ require("packer").startup(function(use)
 
   -- Github Copilot
   -- use "github/copilot.vim"
-  use "zbirenbaum/copilot.lua"
+  -- use "zbirenbaum/copilot.lua"
   use {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
@@ -82,13 +73,13 @@ require("packer").startup(function(use)
       require("copilot").setup({})
     end,
   }
-  use {
+  --[[ use {
     "zbirenbaum/copilot-cmp",
     after = { "copilot.lua" },
     config = function ()
       require("copilot_cmp").setup()
     end
-  }
+  } ]]
 
   -- File Tree
   use "kyazdani42/nvim-tree.lua"
@@ -232,6 +223,8 @@ map("v", "<leader>l", "<cmd>lua require'hop'.hint_lines()<cr>")
 
 -- Surround
 require("surround").setup({})
+
+-- Copilot
 
 -- LSP this is needed for LSP completions in CSS along with the snippets plugin
 local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -406,6 +399,7 @@ for _, lsp in ipairs(servers) do
   }
 end
 
+-- Copilot
 
 map("n", "<leader>ce", '<cmd>lua vim.diagnostic.open_float()<CR>')
 map("n", "<leader>cn", '<cmd>lua vim.diagnostic.goto_next()<CR>')
@@ -738,14 +732,6 @@ map("n", "<leader>vm", "<cmd>lua require('telescope.builtin').marks()<cr>")
 map("n", "<leader>vb", "<cmd>lua require('telescope.builtin').buffers()<cr>")
 -- Telescope LSP Pickers
 map("n", "<leader>rr", "<cmd>lua require('telescope.builtin').lsp_references()<cr>")
-
--- Git Conflict Resolution Mapping
-map("n", "<leader>co", "<Plug>(git-conflict-ours)")
-map("n", "<leader>ct", "<Plug>(git-conflict-theirs)")
-map("n", "<leader>cb", "<Plug>(git-conflict-both)")
-map("n", "<leader>c0", "<Plug>(git-conflict-none)")
-map("n", "<leader>cl", "<Plug>(git-conflict-prev-conflict)")
-map("n", "<leader>ch", "<Plug>(git-conflict-next-conflict)")
 
 -- Formatter
 -- Prettier
