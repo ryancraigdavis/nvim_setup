@@ -63,16 +63,9 @@ require("packer").startup(function(use)
   use "romgrk/barbar.nvim"
 
   -- Github Copilot
-  -- use "github/copilot.vim"
   -- use "zbirenbaum/copilot.lua"
-  use {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    config = function()
-      require("copilot").setup({})
-    end,
-  }
+  use "github/copilot.vim"
+
   --[[ use {
     "zbirenbaum/copilot-cmp",
     after = { "copilot.lua" },
@@ -501,7 +494,6 @@ dap.configurations.cpp = {
     -- runInTerminal = false,
   },
 }
-map("n", "<leader>da", ":call vimspector#Launch()<CR>")
 -- require('dap').set_log_level('INFO')
 dap.defaults.fallback.terminal_win_cmd = '20split new'
 vim.fn.sign_define('DapBreakpoint',
@@ -619,6 +611,7 @@ cmp.setup({
   },
   sources = {
     -- 'crates' is lazy loaded
+    -- { name = "copilot" },
     { name = "nvim_lsp" },
     { name = "treesitter" },
     { name = "vsnip" },
@@ -633,6 +626,24 @@ cmp.setup({
     },
     { name = "spell" },
   },
+  --[[ sorting = {
+    priority_weight = 2,
+    comparators = {
+      require("copilot_cmp.comparators").prioritize,
+
+      -- Below is the default comparitor list and order for nvim-cmp
+      cmp.config.compare.offset,
+      -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
+      cmp.config.compare.exact,
+      cmp.config.compare.score,
+      cmp.config.compare.recently_used,
+      cmp.config.compare.locality,
+      cmp.config.compare.kind,
+      cmp.config.compare.sort_text,
+      cmp.config.compare.length,
+      cmp.config.compare.order,
+    },
+  }, ]]
   formatting = {
     format = function(entry, vim_item)
       vim_item.kind = string.format("%s %s", lspkind.presets.default[vim_item.kind], vim_item.kind)
@@ -644,10 +655,28 @@ cmp.setup({
         buffer = "﬘",
         vsnip = "",
         spell = "暈",
+        -- Copilot = ""
       })[entry.source.name]
 
       return vim_item
     end,
+  },
+})
+
+local has_words_before = function()
+  if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then return false end
+  local line, col = table.unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_text(0, line-1, 0, line-1, col, {})[1]:match("^%s*$") == nil
+end
+cmp.setup({
+  mapping = {
+    ["<Tab>"] = vim.schedule_wrap(function(fallback)
+      if cmp.visible() and has_words_before() then
+        cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+      else
+        fallback()
+      end
+    end),
   },
 })
 
