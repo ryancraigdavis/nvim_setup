@@ -30,121 +30,109 @@ local colors = {
 -- Map leader to space
 g.mapleader = " "
 
-local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
-if fn.empty(fn.glob(install_path)) > 0 then
-  packer_bootstrap = fn.system({
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
     "git",
     "clone",
-    "--depth",
-    "1",
-    "https://github.com/wbthomason/packer.nvim",
-    install_path,
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
   })
 end
+vim.opt.rtp:prepend(lazypath)-- Plugins
 
--- Plugins
-require("packer").startup(function(use)
+require("lazy").setup({
 
   -- Theme
-  use "folke/tokyonight.nvim"
+  "folke/tokyonight.nvim",
+  "kdheepak/lazygit.nvim",
 
-  -- Vim Diff on side/vim fugitive
-  use "kdheepak/lazygit.nvim"
+  -- Mason pkg manager
+    "williamboman/mason.nvim",
 
   -- Nvim LSP Server
-  use "neovim/nvim-lspconfig"
-  use "williamboman/mason-lspconfig.nvim"
+   "neovim/nvim-lspconfig" ,
+   "williamboman/mason-lspconfig.nvim" ,
 
   -- Additional Linting
-  use "mfussenegger/nvim-lint"
+   "mfussenegger/nvim-lint" ,
 
   -- Status Line and Buffer Line in Lua
-  use "hoob3rt/lualine.nvim"
-  use "romgrk/barbar.nvim"
+   "hoob3rt/lualine.nvim" ,
+   "romgrk/barbar.nvim" ,
 
   -- Github Copilot
   -- use "zbirenbaum/copilot.lua"
-  use "github/copilot.vim"
-
-  --[[ use {
-    "zbirenbaum/copilot-cmp",
-    after = { "copilot.lua" },
-    config = function ()
-      require("copilot_cmp").setup()
-    end
-  } ]]
+   "github/copilot.vim" ,
 
   -- File Tree
-  use "kyazdani42/nvim-tree.lua"
-  use "kyazdani42/nvim-web-devicons"
+   "kyazdani42/nvim-tree.lua" ,
+   "kyazdani42/nvim-web-devicons" ,
 
   -- LSP Diagnostics Config
-  use "WhoIsSethDaniel/toggle-lsp-diagnostics.nvim"
+   "WhoIsSethDaniel/toggle-lsp-diagnostics.nvim" ,
 
 
   -- Auto pairs and bracket surroundings
-  use "jiangmiao/auto-pairs"
-  use {
-    "ur4ltz/surround.nvim",
+   "jiangmiao/auto-pairs" ,
+   {
+    "kylechui/nvim-surround",
+    version = "*", -- Use for stability; omit to use `main` branch for the latest features
+    event = "VeryLazy",
     config = function()
-      require"surround".setup {mappings_style = "sandwich"}
+        require("nvim-surround").setup({
+            -- Configuration here, or leave empty to use defaults
+        })
     end
-  }
+    },
 
   -- Commenting
-  use "b3nj5m1n/kommentary"
+   "b3nj5m1n/kommentary" ,
+
 
   -- "Hop" navigation
-  use "phaazon/hop.nvim"
-
-  -- Debugger
-  use "williamboman/mason.nvim"
-  use "mfussenegger/nvim-dap"
-  use "mfussenegger/nvim-dap-python"
-  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
-  use "szw/vim-maximizer"
+   "phaazon/hop.nvim" ,
 
   -- Camelcase Movement
-  use "chaoren/vim-wordmotion"
-  use "bkad/CamelCaseMotion"
+   "chaoren/vim-wordmotion" ,
+   "bkad/CamelCaseMotion" ,
 
   -- HTML Tag completion
   -- https://docs.emmet.io/abbreviations/syntax/
-  use "mattn/emmet-vim"
+   "mattn/emmet-vim" ,
 
   -- Autocompletion plugin
-  use "hrsh7th/cmp-nvim-lsp"
-  use "hrsh7th/cmp-buffer"
-  use "hrsh7th/cmp-path"
-  use "hrsh7th/cmp-cmdline"
-  use "hrsh7th/nvim-cmp"
-  use "f3fora/cmp-spell"
-  use "ray-x/cmp-treesitter"
-  use "hrsh7th/cmp-nvim-lua"
-  use "windwp/nvim-autopairs"
+   "hrsh7th/cmp-nvim-lsp" ,
+   "hrsh7th/cmp-buffer" ,
+   "hrsh7th/cmp-path" ,
+   "hrsh7th/cmp-cmdline" ,
+   "hrsh7th/nvim-cmp" ,
+   "f3fora/cmp-spell" ,
+   "ray-x/cmp-treesitter" ,
+   "hrsh7th/cmp-nvim-lua" ,
+   "windwp/nvim-autopairs" ,
 
   -- VSCode Snippet Feature in Nvim
-  use "hrsh7th/cmp-vsnip"
-  use "hrsh7th/vim-vsnip"
-  use "onsails/lspkind-nvim"
+   "hrsh7th/cmp-vsnip" ,
+   "hrsh7th/vim-vsnip" ,
+   "onsails/lspkind-nvim" ,
 
   -- Formatter
-  use "mhartington/formatter.nvim"
+   "mhartington/formatter.nvim" ,
 
   -- Telescope Finder
-  use "nvim-lua/plenary.nvim"
-  use "nvim-lua/popup.nvim"
-  use "nvim-telescope/telescope.nvim"
-  use "jvgrootveld/telescope-zoxide"
+   "nvim-lua/plenary.nvim" ,
+   "nvim-lua/popup.nvim" ,
+   "nvim-telescope/telescope.nvim" ,
+   "jvgrootveld/telescope-zoxide" ,
 
   -- Treesitter for NeoVim
-  use "nvim-treesitter/nvim-treesitter"
+   "nvim-treesitter/nvim-treesitter" }
 
-  -- If not setup, run PackerSync
-  if packer_bootstrap then
-    require("packer").sync()
-  end
-end)
+  )
+
 
 -- Theme Config
 g.tokyonight_style = "night"
@@ -215,7 +203,7 @@ map("v", "<leader>j", "<cmd>lua require'hop'.hint_words()<cr>")
 map("v", "<leader>l", "<cmd>lua require'hop'.hint_lines()<cr>")
 
 -- Surround
-require("surround").setup({})
+-- require("surround").setup({})
 
 -- Copilot
 
@@ -229,10 +217,8 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
     "additionalTextEdits",
   },
 }
-
--- Mason LSP/Debug/DAP manager
+-- Mason setup
 require("mason").setup()
-require("mason-lspconfig").setup()
 
 -- LSP Server config
 require("lspconfig").pyright.setup({
@@ -436,7 +422,7 @@ opt.splitright = true -- Put new windows right of current
 opt.tabstop = 2 -- Number of spaces tabs count for
 opt.updatetime = 250 -- don't give |ins-completion-menu| messages.
 opt.wrap = true
-opt.mouse = --Disables mouse mode
+opt.mouse =
 
 -- Use spelling for markdown files ‘]s’ to find next, ‘[s’ for previous, 'z=‘ for suggestions when on one.
 -- Source: http:--thejakeharding.com/tutorial/2012/06/13/using-spell-check-in-vim.html
@@ -454,87 +440,7 @@ augroup END
 -- HTML Tag completion
 g.user_emmet_leader_key = "<C-w>"
 
--- Debugger/DAP Config
-local dap = require('dap')
-require("dapui").setup()
-dap.adapters.lldb = {
-  type = 'executable',
-  command = '/usr/local/opt/llvm/bin/lldb-vscode',
-  name = 'lldb'
-}
-require('dap-python').setup('~/.virtualenvs/debugpy/bin/python')
---[[ dap.adapters.python = {
-  type = 'executable';
-  command = '/Users/ryandavis/.local/share/nvim/mason/packages/debugpy/debugpy';
-  args = { '-m', 'debugpy.adapter' };
-} ]]
-dap.configurations.cpp = {
-  {
-    name = 'Launch',
-    type = 'lldb',
-    request = 'launch',
-    program = function()
-      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
-    end,
-    cwd = '${workspaceFolder}',
-    stopOnEntry = false,
-    args = {},
-
-    -- 💀
-    -- if you change `runInTerminal` to true, you might need to change the yama/ptrace_scope setting:
-    --
-    --    echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
-    --
-    -- Otherwise you might get the following error:
-    --
-    --    Error on launch: Failed to attach to the target process
-    --
-    -- But you should be aware of the implications:
-    -- https://www.kernel.org/doc/html/latest/admin-guide/LSM/Yama.html
-    -- runInTerminal = false,
-  },
-}
--- require('dap').set_log_level('INFO')
-dap.defaults.fallback.terminal_win_cmd = '20split new'
-vim.fn.sign_define('DapBreakpoint',
-                   {text = '🟥', texthl = '', linehl = '', numhl = ''})
-vim.fn.sign_define('DapBreakpointRejected',
-                   {text = '🟦', texthl = '', linehl = '', numhl = ''})
-vim.fn.sign_define('DapStopped',
-                   {text = '⭐️', texthl = '', linehl = '', numhl = ''})
-
-vim.keymap.set('n', '<leader>dh',
-               function() require"dap".toggle_breakpoint() end)
-vim.keymap.set('n', '<leader>dH',
-               ":lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>")
-vim.keymap.set({'n', 't'}, '<C-k>', function() require"dap".step_out() end)
-vim.keymap.set({'n', 't'}, "<C-l>", function() require"dap".step_into() end)
-vim.keymap.set({'n', 't'}, '<C-j>', function() require"dap".step_over() end)
-vim.keymap.set({'n', 't'}, '<C-h>', function() require"dap".continue() end)
-vim.keymap.set('n', '<leader>dn', function() require"dap".run_to_cursor() end)
-vim.keymap.set('n', '<leader>dc', function() require"dap".terminate() end)
-vim.keymap.set('n', '<leader>dR',
-               function() require"dap".clear_breakpoints() end)
-vim.keymap.set('n', '<leader>de',
-               function() require"dap".set_exception_breakpoints({"all"}) end)
-vim.keymap.set('n', '<leader>da', function() require"debugHelper".attach() end)
-vim.keymap.set('n', '<leader>dA',
-               function() require"debugHelper".attachToRemote() end)
-vim.keymap
-    .set('n', '<leader>di', function() require"dap.ui.widgets".hover() end)
-vim.keymap.set('n', '<leader>d?', function()
-    local widgets = require "dap.ui.widgets";
-    widgets.centered_float(widgets.scopes)
-end)
-vim.keymap.set('n', '<leader>dk', ':lua require"dap".up()<CR>zz')
-vim.keymap.set('n', '<leader>dj', ':lua require"dap".down()<CR>zz')
-vim.keymap.set('n', '<leader>dr',
-               ':lua require"dap".repl.toggle({}, "vsplit")<CR><C-w>l')
-vim.keymap.set('n', '<leader>du', ':lua require"dapui".toggle()<CR>')
-
-
 map("n", "<leader>dp", "oimport pudb; pudb.set_trace()  # fmt: skip<Esc>")
-map("n", "<leader>z", ":MaximizerToggle!<CR>")
 -- Camelcase Movement
 g.camelcasemotion_key = "<leader>"
 
